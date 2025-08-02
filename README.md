@@ -158,13 +158,15 @@ To use with any MCP-compatible client, add this to your MCP configuration file:
 
 ```json
 {
-  "servers": {
-    "pytm-mcpserver": {
-      "command": "python",
-      "args": ["path/to/your/py-tm-mcpserver/server.py"],
-      "cwd": "path/to/your/py-tm-mcpserver"
-    }
-  }
+    "servers": {
+        "my-pytm-mcpserver": {
+            "type": "stdio",
+            "command": "{REPLACE WITH PATH}\\pytm-mcpserver\\venv\\Scripts\\python.exe",
+            "args": ["-u", "server.py"],
+            "cwd": "{REPACE WITH CURRENT WORKING DIRECTORY}"
+        }
+    },
+    "inputs": []
 }
 ```
 
