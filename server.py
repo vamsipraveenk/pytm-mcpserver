@@ -225,7 +225,7 @@ async def generate_pytm_diagram(arguments: Dict[str, Any]) -> List[TextContent]:
                     dfd_dot = tm.dfd()
                     
                     # Save the DOT file
-                    dot_file = os.path.join(work_dir, f"{system_name}_dfd.dot")
+                    dot_file = os.path.join(os.getcwd(), f"{system_name}_dfd.dot")
                     with open(dot_file, 'w', encoding='utf-8') as f:
                         f.write(dfd_dot)
                     
