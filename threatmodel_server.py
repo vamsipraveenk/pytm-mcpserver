@@ -1,5 +1,4 @@
 
-
 import asyncio
 import sys
 import os
@@ -268,144 +267,60 @@ def generate_advanced_dot(
     boundaries: List[TrustBoundary],
     dataflows: List[DataFlow]
 ) -> str:
-    """Generate advanced DOT diagram with better layout and styling"""
+    """Generate minimal DOT diagram similar to original PyTM style"""
     
-    dot = 'digraph ThreatModel {\n'
-    dot += '  rankdir=TB;\n'
-    dot += '  graph [fontname="Arial", fontsize=14, bgcolor="#ffffff", pad="0.5", compound=true];\n'
-    dot += '  node [fontname="Arial", fontsize=11, style="filled,rounded", margin="0.2"];\n'
-    dot += '  edge [fontname="Arial", fontsize=9, fontcolor="#333333"];\n\n'
+    dot = 'digraph {\n'
     
-    # Color scheme based on security levels
-    boundary_colors = {
-        0: '#ffebee',  # Low security - light red
-        1: '#ffe0b2',  # 
-        2: '#fff9c4',  # 
-        3: '#f0f4c3',  # 
-        4: '#e6ee9c',  # 
-        5: '#dce775',  # Medium security - yellow-green
-        6: '#d4e157',  # 
-        7: '#cddc39',  # 
-        8: '#c0ca33',  # 
-        9: '#afb42b',  # 
-        10: '#9e9d24'  # High security - dark green
-    }
+    # Sort boundaries by security level for logical grouping
+    sorted_boundaries = sorted(boundaries, key=lambda b: b.security_level)
     
-    # Component type styling
-    component_styles = {
-        ComponentType.ACTOR: ('ellipse', '#1976d2', 'white'),
-        ComponentType.USER: ('ellipse', '#2196f3', 'white'),
-        ComponentType.ADMIN: ('ellipse', '#0d47a1', 'white'),
-        ComponentType.SERVICE_ACCOUNT: ('ellipse', '#01579b', 'white'),
-        ComponentType.SERVER: ('box', '#388e3c', 'white'),
-        ComponentType.API_GATEWAY: ('house', '#2e7d32', 'white'),
-        ComponentType.MICROSERVICE: ('component', '#43a047', 'white'),
-        ComponentType.LAMBDA: ('invhouse', '#66bb6a', 'white'),
-        ComponentType.DATABASE: ('cylinder', '#f57c00', 'white'),
-        ComponentType.CACHE: ('cylinder', '#ff9800', 'white'),
-        ComponentType.MESSAGE_QUEUE: ('parallelogram', '#fb8c00', 'white'),
-        ComponentType.FILE_STORAGE: ('folder', '#ffa726', 'white'),
-        ComponentType.EXTERNAL_SERVICE: ('doubleoctagon', '#d32f2f', 'white'),
-        ComponentType.LOAD_BALANCER: ('diamond', '#7b1fa2', 'white'),
-        ComponentType.FIREWALL: ('septagon', '#c2185b', 'white'),
-        ComponentType.PROCESS: ('component', '#5e35b1', 'white'),
-    }
-    
-    # Sort boundaries by security level
-    sorted_boundaries = sorted(boundaries, key=lambda b: b.security_level, reverse=True)
-    
-    # Create subgraphs for boundaries
+    # Create subgraphs for each boundary - minimal style
     for i, boundary in enumerate(sorted_boundaries):
-        color = boundary_colors.get(boundary.security_level, '#f5f5f5')
         dot += f'  subgraph cluster_{i} {{\n'
-        dot += f'    label="{boundary.name} (Level {boundary.security_level})";\n'
-        dot += f'    style="rounded,filled";\n'
-        dot += f'    fillcolor="{color}";\n'
-        dot += f'    color="#999999";\n'
-        dot += f'    fontsize=14;\n'
-        dot += f'    tooltip="{boundary.description or boundary.name}";\n\n'
+        dot += f'    label="{boundary.name}";\n'
         
         # Add components in this boundary
-        boundary_components = [c for c in components if c.boundary == boundary.name]
-        
-        # Group by type for better layout
-        by_type = {}
-        for comp in boundary_components:
-            if comp.type not in by_type:
-                by_type[comp.type] = []
-            by_type[comp.type].append(comp)
-        
-        # Add components grouped by type
-        for comp_type, comps in by_type.items():
-            if len(comps) > 1:
-                dot += f'    {{ rank=same; '
-                for comp in comps:
-                    var = re.sub(r'[^\w]', '_', comp.name.lower())
-                    dot += f'{var}; '
-                dot += '}\n'
+        boundary_comps = [c for c in components if c.boundary == boundary.name]
+        for comp in boundary_comps:
+            var = re.sub(r'[^\w]', '_', comp.name.lower())
             
-            for comp in comps:
-                var = re.sub(r'[^\w]', '_', comp.name.lower())
-                shape, color, fontcolor = component_styles.get(comp.type, ('box', '#607d8b', 'white'))
-                
-                # Build label with metadata
-                label = comp.name
-                if comp.metadata.get('version'):
-                    label += f"\\nv{comp.metadata['version']}"
-                if comp.metadata.get('criticality'):
-                    label += f"\\n[{comp.metadata['criticality']}]"
-                
-                dot += f'    {var} [label="{label}", shape={shape}, fillcolor="{color}", '
-                dot += f'fontcolor="{fontcolor}", width=2, height=0.8'
-                
-                if comp.description:
-                    dot += f', tooltip="{comp.description}"'
-                
-                dot += '];\n'
+            # Simple shape mapping like PyTM
+            if comp.type in [ComponentType.ACTOR, ComponentType.USER, ComponentType.ADMIN]:
+                shape = 'box'
+                style = ', style=rounded'
+            elif comp.type in [ComponentType.DATABASE, ComponentType.CACHE]:
+                shape = 'cylinder'
+                style = ''
+            elif comp.type == ComponentType.EXTERNAL_SERVICE:
+                shape = 'box'
+                style = ', style=dashed'
+            else:
+                shape = 'box'
+                style = ''
+            
+            dot += f'    {var} [label="{comp.name}", shape={shape}{style}];\n'
         
         dot += '  }\n\n'
     
-    # Add data flows with styling based on classification
-    flow_colors = {
-        DataClassification.PUBLIC: '#4caf50',
-        DataClassification.INTERNAL: '#2196f3',
-        DataClassification.CONFIDENTIAL: '#ff9800',
-        DataClassification.RESTRICTED: '#f44336',
-        DataClassification.TOP_SECRET: '#b71c1c'
-    }
-    
-    # Group flows by source to reduce clutter
-    flows_by_source = {}
-    for flow in dataflows:
-        if flow.source not in flows_by_source:
-            flows_by_source[flow.source] = []
-        flows_by_source[flow.source].append(flow)
-    
+    # Add data flows - simple style
     dot += '  // Data flows\n'
-    for source, flows in flows_by_source.items():
-        source_var = re.sub(r'[^\w]', '_', source.lower())
+    for flow in dataflows:
+        source_var = re.sub(r'[^\w]', '_', flow.source.lower())
+        dest_var = re.sub(r'[^\w]', '_', flow.destination.lower())
         
-        for flow in flows:
-            dest_var = re.sub(r'[^\w]', '_', flow.destination.lower())
-            color = flow_colors.get(flow.classification, '#666666')
-            
-            # Build edge label
-            label = f"{flow.protocol}"
-            if flow.port:
-                label += f":{flow.port}"
-            if flow.authentication:
-                label += f"\\n[{flow.authentication}]"
-            
-            # Style based on encryption
-            style = 'solid' if flow.encryption else 'dashed'
-            penwidth = 2.5 if flow.classification in [DataClassification.RESTRICTED, DataClassification.TOP_SECRET] else 2
-            
-            dot += f'  {source_var} -> {dest_var} [label="{label}", color="{color}", '
-            dot += f'style={style}, penwidth={penwidth}];\n'
-            
-            if flow.bidirectional:
-                dot += f'  {dest_var} -> {source_var} [label="Response", color="{color}", '
-                dot += f'style=dotted, penwidth=1.5, constraint=false];\n'
+        # Simple label
+        label = flow.data_type
+        
+        # Simple style based on encryption
+        if flow.encryption:
+            style = ''
+        else:
+            style = ', style=dashed'
+        
+        dot += f'  {source_var} -> {dest_var} [label="{label}"{style}];\n'
+        
+        if flow.bidirectional:
+            dot += f'  {dest_var} -> {source_var} [label="Response", style=dotted];\n'
     
     dot += '}\n'
     return dot
