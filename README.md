@@ -103,7 +103,7 @@ Generated files (with timestamps):<br>
 <b>Prompt used to generate the diagram below:</b><br>
 <code>"Create a high level threat diagram of current codebase"</code>
 
-![OpenAI Codex Architecture](OpenAI_Codex_CLI_threatmodel_20250803_232532.png)
+![OpenAI Codex Architecture](OpenAI_Codex_CLI_threatmodel_20250804_010148.png)
 
 <i>Example threat model diagram generated from a cloned <a href="https://github.com/openai/codex">OpenAI Codex</a> codebase, showing multi-layer security boundaries, component classifications, and encrypted data flows between services.</i>
 
