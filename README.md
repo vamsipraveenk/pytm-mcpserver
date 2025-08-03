@@ -5,6 +5,9 @@ Model Context Protocol server for AI-powered threat modeling.<br>
 ---
 
 <samp>
+   
+## <b>Demo</b></br>
+![Web Application Architecture](assets/Demo.gif)
 
 ## <b>Setup</b>
 
@@ -117,6 +120,8 @@ Generated files (with timestamps):<br>
 ![Web Application Architecture](assets/WebApplication.png)
 
 <i>Example threat model showing user trust boundary with web and database servers in untrusted zone.</i>
+
+ <i> Refer to threat analysis report in ```assets/Web_Application_System_Threat_Analysis_Report.md``` </i>
 
 ---
 
