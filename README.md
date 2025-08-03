@@ -1,54 +1,28 @@
 # <i><b>`ThreatModel-MCP`</b></i>
 
-A modular Model Context Protocol server that transforms natural language into threat models - no API keys required.<br>
+Model Context Protocol server for AI-powered threat modeling.<br>
 
 ---
 
 <samp>
 
-## <b>Features</b>
-
-- <b>`Natural Language`</b>: Describe your system in plain English<br>
-  Automatic component detection from descriptions<br>
-  No need to learn threat modeling syntax
-- <b>`Threat Analysis`</b>: STRIDE-based security analysis<br>
-  Severity-filtered threat identification<br>
-  Actionable security recommendations
-- <b>`Visual Diagrams`</b>: Data flow diagrams in DOT/PNG/SVG<br>
-  Professional styling with trust boundaries<br>
-  Export or view inline
-- <b>`PyTM Integration`</b>: Generate executable PyTM code<br>
-  Full compatibility with PyTM library<br>
-  Customize and extend generated models
-
----
-
 ## <b>Setup</b>
 
-### Prerequisites
-- <code>Python 3.8+</code>
-- <code>Graphviz</code> (optional, for PNG/SVG output)
-
-### Installation
-
-1. Clone and navigate:<br>
-   <code>cd mcp-threatmodel</code>
-
-2. Install dependencies:<br>
+1. <b>`Install dependencies`</b><br>
    <code>pip install -r requirements.txt</code>
 
-3. Install Graphviz (optional):<br>
+2. <b>`Install Graphviz`</b> (optional, for PNG diagrams)<br>
    - <b>Windows</b>: Download from https://graphviz.org/download/<br>
    - <b>Mac</b>: <code>brew install graphviz</code><br>
    - <b>Linux</b>: <code>sudo apt-get install graphviz</code>
 
-4. Add to mcp config:<br>
+3. <b>`Configure MCP client`</b> (Claude Desktop, etc.)<br>
    ```json
    {
      "mcpServers": {
        "threatmodel": {
          "command": "python",
-         "args": ["/full/path/to/threatmodel_server.py"]
+         "args": ["/full/path/to/advanced_threatmodel_server.py"]
        }
      }
    }
@@ -56,84 +30,89 @@ A modular Model Context Protocol server that transforms natural language into th
 
 ---
 
-## <b>Usage</b>
+## <b>Available Tools</b>
 
-### Available Tools
+### <code>create_threat_model</code>
+Creates comprehensive threat models with components, boundaries, and data flows.
 
-The server provides these MCP tools:<br>
-- <b><code>analyze_system</code></b> - Extract components and boundaries
-- <b><code>get_threats</code></b> - List security threats with filtering
-- <b><code>generate_diagram</code></b> - Create diagrams in various formats
-- <b><code>visualize_diagram</code></b> - Show PNG diagram inline
-- <b><code>save_diagram</code></b> - Save diagrams to disk
-- <b><code>get_pytm_code</code></b> - Export PyTM Python code
-- <b><code>quick_analysis</code></b> - Get security overview
+<b>Parameters:</b><br>
+- <code>system_name</code> - Name of the system<br>
+- <code>components</code> - Array of system components with types, boundaries, security controls<br>
+- <code>boundaries</code> - Trust boundaries with security levels (0-10)<br>
+- <code>dataflows</code> - Data flows between components with protocols and classifications<br>
+- <code>output_format</code> - "diagram", "pytm_code", "threats", or "full_analysis"<br>
+- <code>auto_save</code> - Auto-save files (default: true)<br>
+- <code>save_path</code> - Directory to save files (default: current directory)
 
-### Examples
+### <code>analyze_security_threats</code>
+Performs deep security analysis using multiple frameworks.
 
-<b>System Analysis</b><br>
-```
-analyze_system("e-commerce platform with payment gateway")
-```
+<b>Parameters:</b><br>
+- <code>analysis_depth</code> - "basic", "standard", "comprehensive", or "paranoid"<br>
+- <code>threat_frameworks</code> - ["STRIDE", "MITRE_ATTACK", "OWASP", "NIST", "CIS"]<br>
+- <code>focus_areas</code> - Authentication, data protection, network security, etc.<br>
+- <code>compliance_frameworks</code> - ["SOC2", "ISO27001", "HIPAA", "PCI-DSS", "GDPR"]
 
-<b>Threat Identification</b><br>
-```
-get_threats("banking mobile app", severity_filter="high")
-```
+### <code>generate_security_controls</code>
+Generates security control recommendations based on threats.
 
-<b>Diagram Generation</b><br>
-```
-generate_diagram("microservices with kafka", format="png")
-```
+<b>Parameters:</b><br>
+- <code>threats</code> - Array of identified threats<br>
+- <code>risk_appetite</code> - "low", "medium", or "high"<br>
+- <code>technology_stack</code> - Current technologies (AWS, k8s, etc.)<br>
+- <code>prioritization_method</code> - "risk_based", "quick_wins", "compliance_driven"
 
-<b>Save to File</b><br>
-```
-save_diagram("web app with database", filepath="architecture.png")
-```
+### <code>validate_architecture</code>
+Validates architecture against security best practices.
 
----
-
-## <b>Architecture</b>
-
-The server is organized into three modules:<br>
-- <b><code>threatmodel_server.py</code></b> - Main MCP server and tool handlers
-- <b><code>core_utils.py</code></b> - Component extraction and DOT generation
-- <b><code>pytm_generator.py</code></b> - PyTM code generation and execution
+<b>Parameters:</b><br>
+- <code>components</code> - System components to validate<br>
+- <code>validation_rules</code> - ["zero_trust", "encryption_in_transit", "api_gateway_pattern"]<br>
+- <code>architecture_patterns</code> - ["microservices", "serverless", "hybrid_cloud"]
 
 ---
 
-## <b>Component Recognition</b>
+## <b>Component Types</b>
 
-Automatically identifies:<br>
-- <b>Actors</b>: user, customer, admin, mobile
-- <b>Servers</b>: web, api, backend, service
-- <b>Datastores</b>: database, redis, cache, storage
-- <b>External</b>: payment, email, auth, cdn
-- <b>Infrastructure</b>: queue, kafka, microservice
-
-Trust boundaries are automatically assigned:<br>
-- <b>Internet</b> - External-facing components
-- <b>DMZ</b> - API and web servers
-- <b>Internal</b> - Databases and services
+<b>Actors:</b> user, admin, service_account<br>
+<b>Services:</b> server, api_gateway, microservice, lambda, container<br>
+<b>Data:</b> database, cache, message_queue, file_storage<br>
+<b>Infrastructure:</b> load_balancer, firewall, external_service
 
 ---
 
-## <b>Testing</b>
+## <b>Protocols & Classifications</b>
 
-Verify installation:<br>
-<code>python threatmodel_server.py --test</code>
+<b>Protocols:</b> HTTPS, gRPC, WebSocket, SQL, Redis, S3 API<br>
+<b>Data Classifications:</b> PUBLIC → INTERNAL → CONFIDENTIAL → RESTRICTED → TOP_SECRET
 
-This runs basic component extraction and diagram generation tests.
+---
+
+## <b>Auto-Save Features</b>
+
+Generated files (with timestamps):<br>
+- <code>SystemName_threatmodel_YYYYMMDD_HHMMSS.png</code> - Diagram (when output_format="diagram")<br>
+- <code>SystemName_threatmodel_YYYYMMDD_HHMMSS.dot</code> - DOT source (always)<br>
+- <code>SystemName_threatmodel_YYYYMMDD_HHMMSS.py</code> - PyTM code (always)<br>
+- <code>SystemName_threatmodel_analysis_YYYYMMDD_HHMMSS.md</code> - Analysis report (when output_format="full_analysis")
+
+---
+
+## <b>Example Output</b>
+
+![OpenAI Codex Architecture](OpenAI_Codex_CLI_threatmodel_20250803_232532.png)
+
+<i>Example threat model diagram showing OpenAI Codex architecture with multi-layer security boundaries, component classifications, and encrypted data flows between services.</i>
 
 ---
 
 ## <b>Troubleshooting</b>
 
-If diagrams don't generate:<br>
-- Ensure Graphviz is installed and in PATH
-- Try <code>dot -V</code> to verify installation
-- Use <code>format="dot"</code> for text-based output
-- Check PyTM is installed: <code>pip show pytm</code>
+<b>Graphviz issues:</b> Verify with <code>dot -V</code><br>
+<b>DOT syntax errors:</b> Component names automatically sanitized<br>
+<b>No Python:</b> Ensure Python in PATH
 
 ---
+
+
 </samp>
