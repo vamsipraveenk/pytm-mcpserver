@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Advanced ThreatModel MCP Server - Designed for powerful LLM integration
-"""
+
 
 import asyncio
 import sys
