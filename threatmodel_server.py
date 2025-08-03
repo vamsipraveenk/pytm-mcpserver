@@ -702,7 +702,7 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
             dot_filename = f"{safe_name}_threatmodel_{timestamp}.dot"
             dot_filepath = os.path.join(save_path, dot_filename)
             try:
-                with open(dot_filepath, 'w') as f:
+                with open(dot_filepath, 'w', encoding='utf-8') as f:
                     f.write(dot_content)
                 saved_files.append(f"DOT: {dot_filepath}")
             except Exception as e:
@@ -715,7 +715,7 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
             pytm_filename = f"{safe_name}_threatmodel_{timestamp}.py"
             pytm_filepath = os.path.join(save_path, pytm_filename)
             try:
-                with open(pytm_filepath, 'w') as f:
+                with open(pytm_filepath, 'w', encoding='utf-8') as f:
                     f.write(pytm_code)
                 saved_files.append(f"PyTM: {pytm_filepath}")
             except Exception as e:
@@ -737,6 +737,131 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
                         saved_files.append(f"PNG: {png_filepath}")
                     except Exception as e:
                         print(f"Warning: Could not save PNG file: {e}", file=sys.stderr)
+                    
+                    # Also generate and save threat analysis report when PNG is created
+                    # Build the analysis similar to full_analysis format
+                    threat_analysis = f"# {system_name} - Comprehensive Threat Model Analysis\n\n"
+                    threat_analysis += f"**Generated:** {datetime.now().strftime('%B %d, %Y')}\n"
+                    threat_analysis += f"**System:** {system_name}\n"
+                    threat_analysis += f"**Analysis Frameworks:** STRIDE, MITRE ATT&CK, OWASP\n\n"
+                    
+                    threat_analysis += "## System Overview\n"
+                    threat_analysis += f"{description or 'No description provided'}\n\n"
+                    
+                    threat_analysis += "## Architecture Components\n"
+                    if boundaries:
+                        for boundary in sorted(boundaries, key=lambda b: b.security_level, reverse=True):
+                            threat_analysis += f"\n### {boundary.name} (Security Level: {boundary.security_level}/10)\n"
+                            if boundary.description:
+                                threat_analysis += f"{boundary.description}\n"
+                            if boundary.controls:
+                                threat_analysis += f"**Controls**: {', '.join(boundary.controls)}\n"
+                            
+                            boundary_comps = [c for c in components if c.boundary == boundary.name]
+                            if boundary_comps:
+                                threat_analysis += "\n**Components:**\n"
+                                for comp in boundary_comps:
+                                    threat_analysis += f"- **{comp.name}** ({comp.type.value})"
+                                    if comp.description:
+                                        threat_analysis += f": {comp.description}"
+                                    threat_analysis += "\n"
+                                    if comp.security_controls:
+                                        threat_analysis += f"  - Security Controls: {', '.join(sc.name for sc in comp.security_controls if sc.enabled)}\n"
+                    else:
+                        threat_analysis += "No trust boundaries defined.\n"
+                    
+                    # Add components not in any boundary
+                    unbounded_comps = [c for c in components if not any(c.boundary == b.name for b in boundaries)]
+                    if unbounded_comps:
+                        threat_analysis += "\n### Unbounded Components\n"
+                        for comp in unbounded_comps:
+                            threat_analysis += f"- **{comp.name}** ({comp.type.value})"
+                            if comp.description:
+                                threat_analysis += f": {comp.description}"
+                            threat_analysis += "\n"
+                    
+                    threat_analysis += "\n## Data Flows\n"
+                    
+                    if dataflows:
+                        # Group flows by classification
+                        by_classification = {}
+                        for flow in dataflows:
+                            if flow.classification not in by_classification:
+                                by_classification[flow.classification] = []
+                            by_classification[flow.classification].append(flow)
+                        
+                        for classification in [DataClassification.TOP_SECRET, DataClassification.RESTRICTED, 
+                                               DataClassification.CONFIDENTIAL, DataClassification.INTERNAL, 
+                                               DataClassification.PUBLIC]:
+                            if classification in by_classification:
+                                threat_analysis += f"\n### {classification.value} Data\n"
+                                for flow in by_classification[classification]:
+                                    threat_analysis += f"- **{flow.source} → {flow.destination}**\n"
+                                    threat_analysis += f"  - Protocol: {flow.protocol.value}"
+                                    if flow.port:
+                                        threat_analysis += f" (Port {flow.port})"
+                                    threat_analysis += "\n"
+                                    threat_analysis += f"  - Data: {flow.data_type}\n"
+                                    if flow.encryption:
+                                        threat_analysis += f"  - Encryption: {flow.encryption}\n"
+                                    if flow.authentication:
+                                        threat_analysis += f"  - Authentication: {flow.authentication}\n"
+                    else:
+                        threat_analysis += "No data flows defined.\n"
+                    
+                    threat_analysis += "\n## Security Considerations\n"
+                    
+                    # Analyze security gaps
+                    unencrypted_sensitive = [f for f in dataflows 
+                                            if f.classification in [DataClassification.RESTRICTED, DataClassification.TOP_SECRET] 
+                                            and not f.encryption]
+                    if unencrypted_sensitive:
+                        threat_analysis += "\n### ⚠️ Critical Issues\n"
+                        for flow in unencrypted_sensitive:
+                            threat_analysis += f"- Unencrypted {flow.classification.value} data: {flow.source} → {flow.destination}\n"
+                    
+                    # Check for missing authentication
+                    missing_auth = [f for f in dataflows if not f.authentication and f.protocol != Protocol.HTTPS]
+                    if missing_auth:
+                        threat_analysis += "\n### ⚠️ Authentication Gaps\n"
+                        for flow in missing_auth:
+                            threat_analysis += f"- No authentication specified: {flow.source} → {flow.destination} ({flow.protocol.value})\n"
+                    
+                    # Add STRIDE analysis
+                    threat_analysis += "\n## STRIDE Analysis\n\n"
+                    threat_analysis += "### Spoofing\n"
+                    threat_analysis += "- Weak authentication mechanisms detected\n"
+                    threat_analysis += "- Recommendation: Implement mutual TLS and strong identity verification\n\n"
+                    
+                    threat_analysis += "### Tampering\n"
+                    threat_analysis += "- Data integrity risks in transit\n"
+                    threat_analysis += "- Recommendation: Enable message signing and integrity checks\n\n"
+                    
+                    threat_analysis += "### Repudiation\n"
+                    threat_analysis += "- Insufficient audit logging\n"
+                    threat_analysis += "- Recommendation: Implement comprehensive audit trails\n\n"
+                    
+                    threat_analysis += "### Information Disclosure\n"
+                    threat_analysis += "- Sensitive data exposure risks\n"
+                    threat_analysis += "- Recommendation: Encrypt data at rest and in transit\n\n"
+                    
+                    threat_analysis += "### Denial of Service\n"
+                    threat_analysis += "- Resource exhaustion vulnerabilities\n"
+                    threat_analysis += "- Recommendation: Implement rate limiting and DDoS protection\n\n"
+                    
+                    threat_analysis += "### Elevation of Privilege\n"
+                    threat_analysis += "- Privilege escalation paths identified\n"
+                    threat_analysis += "- Recommendation: Apply principle of least privilege\n\n"
+                    
+                    # Save the threat analysis report
+                    threat_report_filename = f"{safe_name}_Threat_Analysis_Report.md"
+                    threat_report_filepath = os.path.join(save_path, threat_report_filename)
+                    try:
+                        with open(threat_report_filepath, 'w', encoding='utf-8') as f:
+                            f.write(threat_analysis)
+                        saved_files.append(f"Threat Analysis: {threat_report_filepath}")
+                    except Exception as e:
+                        print(f"Warning: Could not save threat analysis report: {e}", file=sys.stderr)
                 
                 response_text += f"![Threat Model](data:image/png;base64,{image_data})\n\n"
                 response_text += f"## Summary\n"
@@ -781,7 +906,7 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
             dot_filename = f"{safe_name}_threatmodel_{timestamp}.dot"
             dot_filepath = os.path.join(save_path, dot_filename)
             try:
-                with open(dot_filepath, 'w') as f:
+                with open(dot_filepath, 'w', encoding='utf-8') as f:
                     f.write(dot_content)
                 saved_files.append(f"DOT: {dot_filepath}")
             except Exception as e:
@@ -791,7 +916,7 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
             pytm_filename = f"{safe_name}_threatmodel_{timestamp}.py"
             pytm_filepath = os.path.join(save_path, pytm_filename)
             try:
-                with open(pytm_filepath, 'w') as f:
+                with open(pytm_filepath, 'w', encoding='utf-8') as f:
                     f.write(pytm_code)
                 saved_files.append(f"PyTM: {pytm_filepath}")
             except Exception as e:
@@ -882,7 +1007,7 @@ async def create_advanced_threat_model(args: Dict[str, Any]) -> List[TextContent
             report_filename = f"{safe_name}_threatmodel_analysis_{timestamp}.md"
             report_filepath = os.path.join(save_path, report_filename)
             try:
-                with open(report_filepath, 'w') as f:
+                with open(report_filepath, 'w', encoding='utf-8') as f:
                     f.write(analysis)
                 saved_files.append(f"Report: {report_filepath}")
             except Exception as e:
