@@ -1,187 +1,139 @@
-# MCP Server with PyTM threat modeling framework
+# <i><b>`ThreatModel-MCP`</b></i>
 
+A modular Model Context Protocol server that transforms natural language into threat models - no API keys required.<br>
 
-This Model Context Protocol (MCP) server provides tools for generating data flow diagrams and threat models using the OWASP PyTM framework.
+---
 
-## Features
+<samp>
 
-- **PyTM Data Flow Diagrams**: Generate threat models and security analysis diagrams
+## <b>Features</b>
 
-## 🚀 Getting Started
+- <b>`Natural Language`</b>: Describe your system in plain English<br>
+  Automatic component detection from descriptions<br>
+  No need to learn threat modeling syntax
+- <b>`Threat Analysis`</b>: STRIDE-based security analysis<br>
+  Severity-filtered threat identification<br>
+  Actionable security recommendations
+- <b>`Visual Diagrams`</b>: Data flow diagrams in DOT/PNG/SVG<br>
+  Professional styling with trust boundaries<br>
+  Export or view inline
+- <b>`PyTM Integration`</b>: Generate executable PyTM code<br>
+  Full compatibility with PyTM library<br>
+  Customize and extend generated models
+
+---
+
+## <b>Setup</b>
 
 ### Prerequisites
+- <code>Python 3.8+</code>
+- <code>Graphviz</code> (optional, for PNG/SVG output)
 
-- **Python 3.8+** (Python 3.9+ recommended)
-- **Git** for cloning the repository
-- **Graphviz** (optional, for converting DOT files to PNG/SVG)
+### Installation
 
-### Step 1: Clone the Repository
+1. Clone and navigate:<br>
+   <code>cd mcp-threatmodel</code>
 
-```bash
-git clone https://github.com/yourusername/py-tm-mcpserver.git
-cd py-tm-mcpserver
-```
+2. Install dependencies:<br>
+   <code>pip install -r requirements.txt</code>
 
-### Step 2: Set Up Python Environment (Recommended)
+3. Install Graphviz (optional):<br>
+   - <b>Windows</b>: Download from https://graphviz.org/download/<br>
+   - <b>Mac</b>: <code>brew install graphviz</code><br>
+   - <b>Linux</b>: <code>sudo apt-get install graphviz</code>
 
-Create a virtual environment to isolate dependencies:
+4. Add to mcp config:<br>
+   ```json
+   {
+     "mcpServers": {
+       "threatmodel": {
+         "command": "python",
+         "args": ["/full/path/to/threatmodel_server.py"]
+       }
+     }
+   }
+   ```
 
-```bash
-# Create virtual environment
-python -m venv venv
+---
 
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
-
-### Step 3: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-This will install:
-
-- `mcp>=1.0.0` - Model Context Protocol framework
-- `pytm>=1.0.0` - OWASP PyTM threat modeling framework
-
-### Step 4: Start the Server
-
-**Option A: Using Python directly**
-
-```bash
-python server.py
-```
-
-### Step 5: Verify Installation
-
-Test that the server is working correctly:
-
-```bash
-# Run basic functionality test
-python test_client.py
-```
-You should see output showing successful diagram generation and file creation.
-
-### Step 6: Install Graphviz (Optional)
-
-To convert generated DOT files to visual PNG/SVG images:
-
-**Windows:**
-
-```bash
-# Using Chocolatey
-choco install graphviz
-
-# Or download from: https://graphviz.org/download/
-```
-
-**macOS:**
-
-```bash
-brew install graphviz
-```
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt-get install graphviz
-```
-
-**Converting diagrams:**
-
-```bash
-# Convert DOT file to PNG
-dot -Tpng your_diagram.dot -o your_diagram.png
-
-# Convert DOT file to SVG
-dot -Tsvg your_diagram.dot -o your_diagram.svg
-```
-
-## 🔧 Quick Test
-
-Once the server is running, you can test it with this simple example:
-
-```python
-# The server will generate DOT files for diagrams like this:
-# System: "WebApp" with User -> WebServer -> Database flows
-# Output: WebApp_dfd.dot file ready for visualization
-```
-
-### Quick MCP Client Setup
-
-To use with any MCP-compatible client, add this to your MCP configuration file:
-
-```json
-{
-    "servers": {
-        "my-pytm-mcpserver": {
-            "type": "stdio",
-            "command": "{REPLACE WITH PATH}\\pytm-mcpserver\\venv\\Scripts\\python.exe",
-            "args": ["-u", "server.py"],
-            "cwd": "{REPACE WITH CURRENT WORKING DIRECTORY}"
-        }
-    },
-    "inputs": []
-}
-```
-
-## 🛠️ Usage
+## <b>Usage</b>
 
 ### Available Tools
 
-### generate_data_flow_diagram
+The server provides these MCP tools:<br>
+- <b><code>analyze_system</code></b> - Extract components and boundaries
+- <b><code>get_threats</code></b> - List security threats with filtering
+- <b><code>generate_diagram</code></b> - Create diagrams in various formats
+- <b><code>visualize_diagram</code></b> - Show PNG diagram inline
+- <b><code>save_diagram</code></b> - Save diagrams to disk
+- <b><code>get_pytm_code</code></b> - Export PyTM Python code
+- <b><code>quick_analysis</code></b> - Get security overview
 
-Generates data flow diagrams using the OWASP PyTM threat modeling framework.
+### Examples
 
-**Parameters:**
-
-- `system_name` (required): Name of the system being modeled
-- `description` (optional): Description of the system
-- `components` (required): Array of system components (actor, server, datastore, boundary)
-- `dataflows` (optional): Array of data flows between components
-- `output_format` (optional): Output format - "dfd", "seq", or "stride" (default: "dfd")
-
-## Testing
-
-Test the PyTM tool functionality:
-
-
-```bash
-python test_pytm_tool.py
+<b>System Analysis</b><br>
+```
+analyze_system("e-commerce platform with payment gateway")
 ```
 
-### Verification
+<b>Threat Identification</b><br>
+```
+get_threats("banking mobile app", severity_filter="high")
+```
 
-After configuring your MCP client:
+<b>Diagram Generation</b><br>
+```
+generate_diagram("microservices with kafka", format="png")
+```
 
-1. **Check if the tools are available:**
-   - `hello_world` - Simple greeting tool
-   - `generate_data_flow_diagram` - PyTM diagram generation
-2. **Test with a simple command:**
-   - Try: "Generate a data flow diagram for a simple web app" to test PyTM functionality
+<b>Save to File</b><br>
+```
+save_diagram("web app with database", filepath="architecture.png")
+```
 
-### Getting Help
+---
 
-- Review example usage in `test_pytm_tool.py` and `test_advanced_examples.py`
-- For PyTM-specific issues, see the [PyTM documentation](https://github.com/OWASP/pytm)
+## <b>Architecture</b>
 
-## 🤝 Contributing
+The server is organized into three modules:<br>
+- <b><code>threatmodel_server.py</code></b> - Main MCP server and tool handlers
+- <b><code>core_utils.py</code></b> - Component extraction and DOT generation
+- <b><code>pytm_generator.py</code></b> - PyTM code generation and execution
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
-## 📄 License
+## <b>Component Recognition</b>
 
-This project is open source.
+Automatically identifies:<br>
+- <b>Actors</b>: user, customer, admin, mobile
+- <b>Servers</b>: web, api, backend, service
+- <b>Datastores</b>: database, redis, cache, storage
+- <b>External</b>: payment, email, auth, cdn
+- <b>Infrastructure</b>: queue, kafka, microservice
 
-## 🙏 Acknowledgments
+Trust boundaries are automatically assigned:<br>
+- <b>Internet</b> - External-facing components
+- <b>DMZ</b> - API and web servers
+- <b>Internal</b> - Databases and services
 
-- [OWASP PyTM](https://github.com/OWASP/pytm) - Threat modeling framework
-- [Model Context Protocol](https://github.com/modelcontextprotocol) - MCP framework
+---
+
+## <b>Testing</b>
+
+Verify installation:<br>
+<code>python threatmodel_server.py --test</code>
+
+This runs basic component extraction and diagram generation tests.
+
+---
+
+## <b>Troubleshooting</b>
+
+If diagrams don't generate:<br>
+- Ensure Graphviz is installed and in PATH
+- Try <code>dot -V</code> to verify installation
+- Use <code>format="dot"</code> for text-based output
+- Check PyTM is installed: <code>pip show pytm</code>
+
+---
+</samp>
