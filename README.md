@@ -100,12 +100,23 @@ Generated files (with timestamps):<br>
 
 ## <b>Example Usage</b>
 
-<b>Prompt used to generate the diagram below:</b><br>
+### <b>Example 1: Codebase Analysis</b>
+
+<b>Prompt:</b><br>
 <code>"Create a high level threat diagram of current codebase"</code>
 
 ![OpenAI Codex Architecture](OpenAI_Codex_CLI_threatmodel_20250804_010148.png)
 
 <i>Example threat model diagram generated from a cloned <a href="https://github.com/openai/codex">OpenAI Codex</a> codebase, showing multi-layer security boundaries, component classifications, and encrypted data flows between services.</i>
+
+### <b>Example 2: Web Application Architecture</b>
+
+<b>Prompt:</b><br>
+<code>"A web application where the user interacts with a web server, which in turn communicates with a database server. The web server and database server are outside the user's trust boundary. The user connects to the web application via a browser. The web server handles requests and responses, and the database server stores application data. The trust boundary is around the user only; both the web server and database server are outside this boundary"</code>
+
+![Web Application Architecture](WebApplication.png)
+
+<i>Example threat model showing user trust boundary with web and database servers in untrusted zone.</i>
 
 ---
 
