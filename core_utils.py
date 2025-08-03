@@ -1,3 +1,4 @@
+
 import os
 import re
 import platform
@@ -79,122 +80,68 @@ def extract_components(description: str) -> Tuple[List[Dict], List[str]]:
     return components, list(boundaries)
 
 def generate_simple_dot(components: List[Dict], boundaries: List[str]) -> str:
-    """Generate a professional DOT diagram."""
-    dot = 'digraph ThreatModel {\n'
-    dot += '  rankdir=TB;\n'  # Top to Bottom for better width
-    dot += '  graph [fontname="Arial", fontsize=14, bgcolor="#ffffff", pad="0.5", nodesep="1.5", ranksep="2", compound=true];\n'
-    dot += '  node [fontname="Arial", fontsize=11, style="filled,rounded", margin="0.3,0.15"];\n'
-    dot += '  edge [fontname="Arial", fontsize=9, fontcolor="#333333", labeldistance=3];\n\n'
+    """Generate a minimal DOT diagram like PyTM."""
+    dot = 'digraph {\n'
     
-    # Color schemes
-    colors = {
-        'Internet': '#e3f2fd',
-        'DMZ': '#fff9c4',
-        'Internal': '#f1f8e9',
-        'Cloud': '#f3e5f5'
-    }
-    
-    # Order boundaries for better layout
-    boundary_order = ['Internet', 'DMZ', 'Internal']
-    ordered_boundaries = [b for b in boundary_order if b in boundaries] + [b for b in boundaries if b not in boundary_order]
-    
-    # Add subgraphs for boundaries with better layout
-    for i, boundary in enumerate(ordered_boundaries):
-        color = colors.get(boundary, '#f5f5f5')
+    # Add subgraphs for boundaries - minimal style
+    for i, boundary in enumerate(boundaries):
         dot += f'  subgraph cluster_{i} {{\n'
         dot += f'    label="{boundary}";\n'
-        dot += f'    style="rounded,filled";\n'
-        dot += f'    fillcolor="{color}";\n'
-        dot += f'    color="#999999";\n'
-        dot += f'    fontsize=16;\n'
-        dot += f'    labelloc=t;\n'
-        dot += f'    margin=15;\n\n'
-        
-        # Arrange components in a grid-like pattern within each boundary
-        boundary_components = [c for c in components if c['boundary'] == boundary]
-        
-        # Create invisible nodes to help with layout
-        if len(boundary_components) > 2:
-            dot += f'    // Layout helpers for {boundary}\n'
-            dot += f'    {{rank=same; '
-            for j, comp in enumerate(boundary_components[:len(boundary_components)//2]):
-                var = re.sub(r'[^\w]', '_', comp['name'].lower())
-                if j > 0:
-                    dot += '; '
-                dot += var
-            dot += '}\n'
         
         # Add components in this boundary
-        for comp in components:
-            if comp['boundary'] == boundary:
-                var = re.sub(r'[^\w]', '_', comp['name'].lower())
-                
-                # Style based on component type
-                if comp['type'] == 'actor':
-                    shape = 'ellipse'
-                    color = '#2196f3'
-                    fontcolor = 'white'
-                elif comp['type'] == 'server':
-                    shape = 'box'
-                    color = '#4caf50'
-                    fontcolor = 'white'
-                elif comp['type'] == 'datastore':
-                    shape = 'cylinder'
-                    color = '#ff9800'
-                    fontcolor = 'white'
-                elif comp['type'] == 'external':
-                    shape = 'house'
-                    color = '#f44336'
-                    fontcolor = 'white'
-                elif comp['type'] == 'process':
-                    shape = 'component'
-                    color = '#9c27b0'
-                    fontcolor = 'white'
-                else:
-                    shape = 'box'
-                    color = '#607d8b'
-                    fontcolor = 'white'
-                
-                dot += f'    {var} [label="{comp["name"]}", shape={shape}, fillcolor="{color}", fontcolor="{fontcolor}", width=2.5, fixedsize=true];\n'
+        boundary_components = [c for c in components if c['boundary'] == boundary]
+        for comp in boundary_components:
+            var = re.sub(r'[^\w]', '_', comp['name'].lower())
+            
+            # Simple shape mapping
+            if comp['type'] == 'actor':
+                shape = 'box'
+                style = ', style=rounded'
+            elif comp['type'] == 'datastore':
+                shape = 'cylinder'
+                style = ''
+            elif comp['type'] == 'external':
+                shape = 'box'
+                style = ', style=dashed'
+            else:
+                shape = 'box'
+                style = ''
+            
+            dot += f'    {var} [label="{comp["name"]}", shape={shape}{style}];\n'
         
         dot += '  }\n\n'
     
-    # Add some structure to prevent overlap
-    dot += '\n'
-    
-    # Add data flows with better spacing
+    # Add data flows - simple style
     actors = [c for c in components if c['type'] == 'actor']
     servers = [c for c in components if c['type'] in ['server', 'process']]
     stores = [c for c in components if c['type'] == 'datastore']
     externals = [c for c in components if c['type'] == 'external']
     
-    # Use constraint=false for some edges to allow better layout
     dot += '  // Data flows\n'
     
-    # Actor -> Server flows (primary flows)
+    # Actor -> Server flows
     for i, actor in enumerate(actors):
         for j, server in enumerate(servers):
-            a_var = re.sub(r'[^\w]', '_', actor['name'].lower())
-            s_var = re.sub(r'[^\w]', '_', server['name'].lower())
-            # Only show primary flows to reduce clutter
-            if i == 0 or j == 0:  # First actor to all servers, or all actors to first server
-                dot += f'  {a_var} -> {s_var} [label="HTTPS", color="#1976d2", penwidth=2, fontsize=9];\n'
-                if i == 0 and j == 0:  # Only one response flow
-                    dot += f'  {s_var} -> {a_var} [label="Response", color="#388e3c", style=dashed, constraint=false, fontsize=9];\n'
+            if i == 0 or j == 0:  # Reduce clutter
+                a_var = re.sub(r'[^\w]', '_', actor['name'].lower())
+                s_var = re.sub(r'[^\w]', '_', server['name'].lower())
+                dot += f'  {a_var} -> {s_var} [label="Request"];\n'
+                if i == 0 and j == 0:
+                    dot += f'  {s_var} -> {a_var} [label="Response", style=dashed];\n'
     
     # Server -> Datastore flows
-    for i, server in enumerate(servers[:1]):  # Only from first server to reduce clutter
+    for i, server in enumerate(servers[:1]):
         for store in stores:
             s_var = re.sub(r'[^\w]', '_', server['name'].lower())
             d_var = re.sub(r'[^\w]', '_', store['name'].lower())
-            dot += f'  {s_var} -> {d_var} [label="Query", color="#f57c00", penwidth=2, fontsize=9];\n'
+            dot += f'  {s_var} -> {d_var} [label="Query"];\n'
     
     # Server -> External flows
-    for server in servers[:1]:  # Only from first server
+    for server in servers[:1]:
         for external in externals:
             s_var = re.sub(r'[^\w]', '_', server['name'].lower())
             e_var = re.sub(r'[^\w]', '_', external['name'].lower())
-            dot += f'  {s_var} -> {e_var} [label="API", color="#d32f2f", penwidth=2, fontsize=9];\n'
+            dot += f'  {s_var} -> {e_var} [label="API"];\n'
     
     dot += '}\n'
     return dot
