@@ -1,6 +1,7 @@
 
 import asyncio
 import os
+import re
 import tempfile
 import shutil
 import time
@@ -22,16 +23,16 @@ tm.mergeResponses = False
 '''
     
     for boundary in boundaries:
-        var = boundary.lower().replace(' ', '_')
+        var = re.sub(r'[^\w]', '_', boundary.lower())
         code += f'{var} = Boundary("{boundary}")\n'
     
     code += '\n# Components\n'
     comp_vars = {}
     
     for comp in components:
-        var = comp['name'].lower().replace(' ', '_')
+        var = re.sub(r'[^\w]', '_', comp['name'].lower())
         comp_vars[comp['name']] = var
-        boundary_var = comp['boundary'].lower().replace(' ', '_')
+        boundary_var = re.sub(r'[^\w]', '_', comp['boundary'].lower())
         
         if comp['type'] == 'actor':
             code += f'{var} = Actor("{comp["name"]}")\n'
@@ -77,6 +78,12 @@ async def execute_pytm_fast(code: str, args: List[str], python_cmd: str) -> Dict
     temp_dir = tempfile.mkdtemp()
     temp_file = os.path.join(temp_dir, "model.py")
     
+    # Add DOT layout improvements for PyTM
+    enhanced_args = args.copy()
+    if '--dfd' in args:
+        # PyTM doesn't directly support these, but we'll process the output
+        pass
+    
     try:
         # Write the file
         with open(temp_file, 'w') as f:
@@ -84,7 +91,7 @@ async def execute_pytm_fast(code: str, args: List[str], python_cmd: str) -> Dict
         
         # Execute PyTM
         process = await asyncio.create_subprocess_exec(
-            python_cmd, temp_file, *args,
+            python_cmd, temp_file, *enhanced_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=temp_dir
@@ -101,7 +108,17 @@ async def execute_pytm_fast(code: str, args: List[str], python_cmd: str) -> Dict
             return {"error": "PyTM execution timed out. Try a simpler model."}
         
         if process.returncode == 0:
-            return {"success": True, "output": stdout.decode('utf-8', errors='ignore')}
+            output = stdout.decode('utf-8', errors='ignore')
+            
+            # If it's DOT output, enhance it with better layout directives
+            if '--dfd' in args and 'digraph' in output:
+                # Add layout improvements to PyTM's DOT output
+                output = output.replace('digraph {', 'digraph ThreatModel {')
+                if 'rankdir=' not in output:
+                    output = output.replace('digraph ThreatModel {', 
+                        'digraph ThreatModel {\n  rankdir=TB;\n  nodesep=1.5;\n  ranksep=2;')
+            
+            return {"success": True, "output": output}
         else:
             return {"error": stderr.decode('utf-8', errors='ignore')}
             
