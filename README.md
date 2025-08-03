@@ -22,7 +22,7 @@ Model Context Protocol server for AI-powered threat modeling.<br>
      "mcpServers": {
        "threatmodel": {
          "command": "python",
-         "args": ["/full/path/to/advanced_threatmodel_server.py"]
+         "args": ["/full/path/to/threatmodel_server.py"]
        }
      }
    }
